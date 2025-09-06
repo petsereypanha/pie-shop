@@ -1,11 +1,16 @@
-import { Routes } from '@angular/router';
+import { Router, Routes } from '@angular/router';
 import { HomeComponent } from './home/home.component';
 import { NotFoundComponent } from './not-found/not-found.component';
+import { inject } from '@angular/core';
+import { FeatureFlagService } from './services/feature-flag.service';
+import { map } from 'rxjs';
+import { HelloService } from './services/hello.service';
 import { ContactComponent } from './contact/contact.component';
-import { AboutComponent } from './about/about.component';
-import { ProductsViewComponent } from './products-view/products-view.component';
-import { PRODUCT_ROUTES } from './products-view/product.routes';
-import {CartComponent} from './cart/cart.component';
+import { ContactService } from './services/contact.service';
+import { authRouteGuard } from './cart-auth-route-guard';
+import { NotReadyComponent } from './not-ready/not-ready.component';
+import { NotAuthorizedComponent } from './not-authorized/not-authorized.component';
+import {HomeUpdatedComponent} from '../home-updated/home-updated.component';
 
 export enum ROUTER_TOKENS {
   HOME = 'home',
@@ -14,6 +19,8 @@ export enum ROUTER_TOKENS {
   ABOUT = 'about',
   CHECKOUT = 'checkout',
   CART = 'cart',
+  NOT_AUTH = 'not-auth',
+  NOT_READY = 'not-ready'
 }
 
 export const ROUTES: Routes = [
@@ -24,24 +31,61 @@ export const ROUTES: Routes = [
   },
   {
     path: ROUTER_TOKENS.HOME,
+    component: HomeUpdatedComponent,
+    canMatch: [() => {
+      const flagService = inject(FeatureFlagService);
+      return flagService.featureFlags.pipe(map((flag) => {
+        return !!flag.home
+      }))
+    }]
+  },
+  {
+    path: ROUTER_TOKENS.HOME,
     component: HomeComponent,
   },
   {
     path: `${ROUTER_TOKENS.SHOP}/:categoryId` ,
-    loadChildren: () => import('./products-view/product.routes').then(m => m.PRODUCT_ROUTES),
+    loadChildren: () => import('./products-view/products.routes').then(m => m.PRODUCT_ROUTES),
   },
   {
     path: ROUTER_TOKENS.CONTACT,
-    loadComponent: () => import('./contact/contact.component').then(m => m.ContactComponent)
+    component: ContactComponent,
+    canActivate: [
+      () => {
+        const flagService = inject(FeatureFlagService);
+        const router = inject(Router)
+
+        return flagService.featureFlags.pipe(map((flag) => !!flag.contact  || router.parseUrl(`/${ROUTER_TOKENS.NOT_READY}`)))
+      },
+      authRouteGuard(ROUTER_TOKENS.CONTACT)
+    ],
+    resolve: {userHello: () => {
+        const helloService = inject(HelloService);
+
+        return helloService.getUserHello()
+      }},
+    canDeactivate: [() => {
+      const contactService = inject(ContactService);
+      return contactService.canDeactivate();
+    }]
+  },
+  {
+    path: ROUTER_TOKENS.NOT_AUTH,
+    component: NotAuthorizedComponent,
+  },
+  {
+    path: ROUTER_TOKENS.NOT_READY,
+    component: NotReadyComponent,
   },
   {
     path: ROUTER_TOKENS.ABOUT,
-    loadChildren: () => import('./about/about.module').then(m => m.AboutModule)
+    loadChildren: () => import('./about/about.module').then(m => m.AboutModule),
   },
   {
     path: ROUTER_TOKENS.CHECKOUT,
     outlet: ROUTER_TOKENS.CART,
     loadComponent: () => import('./cart/cart.component').then(m => m.CartComponent),
+    canActivate: [authRouteGuard(ROUTER_TOKENS.CART)]
   },
   {
     path: '**',
