@@ -1,6 +1,12 @@
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { ApplicationConfig } from '@angular/core';
-import { provideRouter, withComponentInputBinding, withDebugTracing } from '@angular/router';
+import {
+  PreloadAllModules,
+  provideRouter,
+  withComponentInputBinding,
+  withDebugTracing,
+  withPreloading
+} from '@angular/router';
 import { ROUTES } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
@@ -9,6 +15,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(
       ROUTES,
       withComponentInputBinding(),
+      withPreloading(PreloadAllModules),
     ),
   ]
 };

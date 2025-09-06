@@ -2,6 +2,7 @@
   <div class="cart-header"><span>
     Bethany's Pie Shop Shopping Cart
   </span><button
+  (click)="close()"
     mat-raised-button
   >close</button></div>
   <div class="cart-items-wrapper" *ngIf="!submitted; else formSubmitted">
@@ -64,6 +65,7 @@
         </div>
         <div class="totals-details-wrapper">
           <button
+          (click)="close()"
           mat-button-raised
           >Close Cart</button>
         </div>

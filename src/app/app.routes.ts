@@ -5,6 +5,7 @@ import { ContactComponent } from './contact/contact.component';
 import { AboutComponent } from './about/about.component';
 import { ProductsViewComponent } from './products-view/products-view.component';
 import { PRODUCT_ROUTES } from './products-view/product.routes';
+import {CartComponent} from './cart/cart.component';
 
 export enum ROUTER_TOKENS {
   HOME = 'home',
@@ -27,16 +28,20 @@ export const ROUTES: Routes = [
   },
   {
     path: `${ROUTER_TOKENS.SHOP}/:categoryId` ,
-    component: ProductsViewComponent,
-    children: PRODUCT_ROUTES
+    loadChildren: () => import('./products-view/product.routes').then(m => m.PRODUCT_ROUTES),
   },
   {
     path: ROUTER_TOKENS.CONTACT,
-    component: ContactComponent,
+    loadComponent: () => import('./contact/contact.component').then(m => m.ContactComponent)
   },
   {
     path: ROUTER_TOKENS.ABOUT,
-    component: AboutComponent,
+    loadChildren: () => import('./about/about.module').then(m => m.AboutModule)
+  },
+  {
+    path: ROUTER_TOKENS.CHECKOUT,
+    outlet: ROUTER_TOKENS.CART,
+    loadComponent: () => import('./cart/cart.component').then(m => m.CartComponent),
   },
   {
     path: '**',
